@@ -69,14 +69,37 @@ def process_webcam_and_compare(expert_video_path):
                 user_flat = normalized_user_keypoints.flatten()
                 distance, _ = fastdtw(expert_flat.reshape(-1, 1), user_flat.reshape(-1, 1), dist=euclidean)
                 
+                """
                 # 평가 점수 및 멘트
                 if distance < 10:
-                    feedback = "Wow, perfect! Great job!"
+                    feedback = "Perfect! Great job!"
                 elif distance < 30:
                     feedback = "Good job! You'll be perfect!"
                 else:
                     feedback = "It's okay! Keep trying!"
                 
+                # 화면에 텍스트 출력
+                cv2.putText(frame_amateur, f"Score: {distance:.2f}", (50, 50),
+                            cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+                cv2.putText(frame_amateur, feedback, (50, 100),
+                            cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+                """
+                # 점수 계산 (100점 만점 변환)
+                max_distance = 40  # 'bad' 기준인 40을 최대 거리로 설정
+                score = max(100 - (distance / max_distance) * 100, 0)  # 100에서 거리 비율만큼 감소
+                
+                # 평가 점수 및 멘트
+                if score >= 95:
+                    feedback = "Perfect! Great job!"
+                elif score >= 85:
+                    feedback = "Good! You're almost there!"
+                elif score >= 75:
+                    feedback = "Normal! Keep going!"
+                elif score >= 60:
+                    feedback = "Nice try! You're getting there!"
+                else:
+                    feedback = "Good effort! Keep it up!"
+            
                 # 화면에 텍스트 출력
                 cv2.putText(frame_webcam, f"Score: {distance:.2f}", (50, 50),
                             cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
