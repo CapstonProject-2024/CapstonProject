@@ -160,7 +160,7 @@ def process_webcam_with_overlay_and_compare(expert_keypoints_list, overlay_video
                     if movement < movement_threshold:
                         # 움직임이 없으면 경고 메시지 출력
                         stillness_frames += 1
-                        if stillness_frames > 4:  # 4프레임 동안 가만히 있으면 메시지 출력
+                        if stillness_frames > 3:  # 3프레임 동안 가만히 있으면 메시지 출력
                             cv2.putText(combined_frame, "Move your body!", (50, 100),
                                         cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
                             cv2.putText(combined_frame, feedback, (50, 100),
@@ -197,6 +197,8 @@ def process_webcam_with_overlay_and_compare(expert_keypoints_list, overlay_video
     
                         # 점수와 피드백 출력
                         cv2.putText(combined_frame, f"Score: {score:.2f}", (50, 50),
+                                    cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+                        cv2.putText(combined_frame, feedback, (50, 100),
                                     cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
         
                 # 현재 프레임 키포인트를 이전 키포인트로 저장
