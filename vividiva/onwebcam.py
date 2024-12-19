@@ -82,9 +82,15 @@ def webcam_with_overlay(audio_file, overlay_video, stop_event, speed=1.0):
         cap_overlay.set(cv2.CAP_PROP_POS_MSEC, elapsed_time * 1000)  # 동기화된 시간으로 이동
         ret_overlay, frame_overlay = cap_overlay.read()
         if not ret_overlay:
-            print("Overlay video ended.")
-            stop_event.set()
-            break
+            print("Restarting overlay video.")
+            cap_overlay.set(cv2.CAP_PROP_POS_FRAMES, 0)
+            start_time = time.time()
+            continue
+
+        if audio_process.poll() is not None:  # 오디오가 종료되었으면
+            print("Restarting audio.")
+            audio_process.terminate()
+            audio_process = play_audio_and_wait(audio_file, speed)
 
         # 거울 모드로 변경
         frame_webcam = cv2.flip(frame_webcam, 1)
@@ -109,8 +115,8 @@ def webcam_with_overlay(audio_file, overlay_video, stop_event, speed=1.0):
     audio_process.terminate()
 
 def main():
-    overlay_video = "contour/contourwithaudio_x75.mp4"
-    audio_file = "contour/contourwithaudio_x75.mp4"
+    overlay_video = "contour/contourwithaudio_x100.mp4"
+    audio_file = "contour/contourwithaudio_x100.mp4"
 
     stop_event = threading.Event()
 
