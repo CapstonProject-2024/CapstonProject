@@ -21,11 +21,10 @@ inference_state = predictor.init_state(video_path=video_dir)
 predictor.reset_state(inference_state)
 
 
-
-
 #############################################################
 ######## Add a second click to refine the prediction ########
 #############################################################
+
 
 # 전신
 ann_frame_idx = 0  # the frame index we interact with
@@ -120,3 +119,66 @@ for out_frame_idx in range(0, len(frame_names), vis_frame_stride):
     plt.imshow(Image.open(os.path.join(video_dir, frame_names[out_frame_idx])))
     for out_obj_id, out_mask in video_segments[out_frame_idx].items():
         show_mask(out_mask, plt.gca(), obj_id=out_obj_id)
+
+
+
+#############################################################
+################ save segmentation video ################
+#############################################################
+
+## 동영상 원본 fps
+# 동영상 파일 경로
+video_path = "/content/drive/MyDrive/Colab Notebooks/vividiva/vividiva.mp4"
+
+# 비디오 캡처 객체 생성
+cap = cv2.VideoCapture(video_path)
+
+if cap.isOpened():
+    # FPS 가져오기
+    fps = cap.get(cv2.CAP_PROP_FPS)
+    print(f"FPS: {fps}")
+else:
+    print("동영상을 열 수 없습니다.")
+
+# 캡처 객체 해제
+cap.release()
+
+
+## 비디오 저장
+# 비디오 저장 경로와 설정
+output_video_path = "/content/drive/MyDrive/Colab Notebooks/vividiva/segmentation.mp4"
+frame_size = None  # 프레임 크기 (자동 설정)
+
+for frame_idx, frame_name in enumerate(frame_names):
+    # 원본 프레임 불러오기
+    frame = np.array(Image.open(os.path.join(video_dir, frame_name)))
+
+    # 첫 번째 프레임에서 비디오 크기 설정
+    if frame_size is None:
+        frame_size = (frame.shape[1], frame.shape[0])  # (width, height)
+        fourcc = cv2.VideoWriter_fourcc(*"mp4v")
+        video_writer = cv2.VideoWriter(output_video_path, fourcc, fps, frame_size)
+
+    # 세그멘테이션 결과 시각화
+    overlay_frame = frame.copy()
+    if frame_idx in video_segments:
+        for out_obj_id, out_mask in video_segments[frame_idx].items():
+            # 배치 차원 제거
+            if out_mask.ndim == 3 and out_mask.shape[0] == 1:
+                out_mask = np.squeeze(out_mask, axis=0)  # (1, H, W) → (H, W)
+
+            # 마스크를 컬러로 변환
+            colored_mask = np.zeros_like(frame, dtype=np.uint8)
+            mask_indices = out_mask > 0
+            colored_mask[mask_indices] = [255, 255, 255]  # 흰색 (RGB)
+
+            # 투명도 설정
+            alpha = 0.5
+            overlay_frame = cv2.addWeighted(overlay_frame, 1 - alpha, colored_mask, alpha, 0)
+
+    # 비디오에 프레임 추가
+    video_writer.write(cv2.cvtColor(overlay_frame, cv2.COLOR_RGB2BGR))
+
+# 비디오 작성기 종료
+video_writer.release()
+print(f"비디오 저장 완료: {output_video_path}")
